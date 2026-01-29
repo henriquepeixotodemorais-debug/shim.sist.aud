@@ -332,7 +332,7 @@ if password == SENHA_SECRETARIOS:
 # AUTORIDADES
 # ---------------------------------------------------------
 elif password == SENHA_AUTORIDADES:
-    st.header("⚖ Painel das Autoridades")
+    st.header("⚖ Painel das Autoridades - Audiências")
     for dia in df["dia"].unique():
         # df_dia = df[df["dia"] == dia]
         df_dia = df[df["dia"] == dia].sort_values(by="data e horário")
