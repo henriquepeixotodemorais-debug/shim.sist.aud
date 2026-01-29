@@ -266,7 +266,7 @@ def render_process_box(process_df, show_sensitive=False):
     with st.container():
         dt = row0["data e horário"]
         dt_str = dt.strftime("%d/%m/%Y %H:%M") if pd.notna(dt) else row0.get("data e horário", "")
-        st.markdown(f"### ⏰ {dt_str}")
+        st.markdown(f"#### ⏰ {dt_str}")
         st.markdown(f"**Processo:** {row0.get('número do processo relacionado','')}")
         st.markdown(f"**Tipo:** {row0.get('parte a ser ouvida ou tipo de processo','')}")
         link = row0.get("link do processo", "")
