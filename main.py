@@ -309,7 +309,7 @@ def render_day(df_dia, show_sensitive):
         with cols[idx]:
             df_sala = df_dia[df_dia["sala de audiência"] == sala]
             # st.metric(label="nº processos",value=df_sala.groupby("data e horário").size())
-            st.markdown(f"{df_sala.groupby("data e horário").size()}")
+            st.markdown(f"{df_sala.groupby("data e horário")["processos"].count()}")
             for processo, bloco in df_sala.groupby("data e horário"):
             # for processo, bloco in df_sala.groupby("número do processo relacionado"):
                 render_process_box(bloco, show_sensitive)
