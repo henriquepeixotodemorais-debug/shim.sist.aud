@@ -308,8 +308,8 @@ def render_day(df_dia, show_sensitive):
     for idx, sala in enumerate(salas):
         with cols[idx]:
             st.markdown(f"### 🏛 Sala {sala}")
-            st.markdown(f"## processos: {df_sala.groupby("data e horário").count()}")
             df_sala = df_dia[df_dia["sala de audiência"] == sala]
+            st.markdown(f"## processos: {df_sala.groupby("data e horário").count()}")
             for processo, bloco in df_sala.groupby("data e horário"):
             # for processo, bloco in df_sala.groupby("número do processo relacionado"):
                 render_process_box(bloco, show_sensitive)
