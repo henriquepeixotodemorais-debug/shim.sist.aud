@@ -318,7 +318,8 @@ def render_day(df_dia, show_sensitive):
 if password == SENHA_SECRETARIOS:
     st.header("📌 Painel dos Secretários")
     for dia in df["dia"].unique():
-        df_dia = df[df["dia"] == dia]
+        # df_dia = df[df["dia"] == dia]
+        df_dia = df[df["dia"] == dia].sort_values(by="data e horário")
         if any(df_dia["sala de audiência"].isin(salas_selecionadas)):
             st.markdown(f"## 📅 {dia}")
             render_day(df_dia, show_sensitive=True)
@@ -329,7 +330,8 @@ if password == SENHA_SECRETARIOS:
 elif password == SENHA_AUTORIDADES:
     st.header("⚖ Painel das Autoridades")
     for dia in df["dia"].unique():
-        df_dia = df[df["dia"] == dia]
+        # df_dia = df[df["dia"] == dia]
+        df_dia = df[df["dia"] == dia].sort_values(by="data e horário")
         if any(df_dia["sala de audiência"].isin(salas_selecionadas)):
             st.markdown(f"## 📅 {dia}")
             render_day(df_dia, show_sensitive=False)
