@@ -309,6 +309,7 @@ def render_day(df_dia, show_sensitive):
     for idx, sala in enumerate(salas):
         with cols[idx]:
             st.markdown(f"## 🏛 Sala {sala}")
+            st.markdown(f"##{len(df_sala["número do processo relacionado"])}")
             df_sala = df_dia[df_dia["sala de audiência"] == sala]
             # st.metric(label="nº processos",value=df_sala.groupby("data e horário").size())
             # st.markdown(f"{df_sala.groupby('data e horário')['processos'].nunique()}")
@@ -327,9 +328,6 @@ if password == SENHA_SECRETARIOS:
         df_dia = df[df["dia"] == dia].sort_values(by="data e horário")
         if any(df_dia["sala de audiência"].isin(salas_selecionadas)):
             st.divider()
-            st.markdown(f'teste2')
-            
-            st.markdown(f'{df[df["dia"] == dia].count()}')
             st.markdown(f"# 📅 {dia}")
             render_day(df_dia, show_sensitive=True)
 
@@ -343,9 +341,6 @@ elif password == SENHA_AUTORIDADES:
         df_dia = df[df["dia"] == dia].sort_values(by="data e horário")
         if any(df_dia["sala de audiência"].isin(salas_selecionadas)):
             st.divider()
-            st.markdown(f'teste3')
-            
-            st.markdown(f'{len(df[df["dia"] == dia])}')
             st.markdown(f"# 📅 {dia}")
             render_day(df_dia, show_sensitive=False)
 
