@@ -328,6 +328,7 @@ if password == SENHA_SECRETARIOS:
         if any(df_dia["sala de audiência"].isin(salas_selecionadas)):
             st.divider()
             st.markdown(f'teste')
+            
             st.markdown(f'{df["data e horário"].count()}')
             st.markdown(f"# 📅 {dia}")
             render_day(df_dia, show_sensitive=True)
@@ -342,6 +343,9 @@ elif password == SENHA_AUTORIDADES:
         df_dia = df[df["dia"] == dia].sort_values(by="data e horário")
         if any(df_dia["sala de audiência"].isin(salas_selecionadas)):
             st.divider()
+            st.markdown(f'teste')
+            
+            st.markdown(f'{df["data e horário"].count()}')
             st.markdown(f"# 📅 {dia}")
             render_day(df_dia, show_sensitive=False)
 
