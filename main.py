@@ -311,7 +311,7 @@ def render_day(df_dia, show_sensitive):
             st.markdown(f"## 🏛 Sala {sala}")
             df_sala = df_dia[df_dia["sala de audiência"] == sala]
             # st.markdown(f"##{len(df_sala["número do processo relacionado"])}")
-            st.metric(label="nº processos",delta=len(df_sala["número do processo relacionado"]))
+            st.metric(label="nº processos",value="",delta=len(df_sala["número do processo relacionado"]))
             # st.markdown(f"{df_sala.groupby('data e horário')['processos'].nunique()}")
 
             for processo, bloco in df_sala.groupby("data e horário"):
