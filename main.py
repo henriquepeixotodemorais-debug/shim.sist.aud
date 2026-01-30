@@ -309,8 +309,8 @@ def render_day(df_dia, show_sensitive):
     for idx, sala in enumerate(salas):
         with cols[idx]:
             st.markdown(f"## 🏛 Sala {sala}")
-            st.markdown(f"##{len(df_sala["número do processo relacionado"])}")
             df_sala = df_dia[df_dia["sala de audiência"] == sala]
+            st.markdown(f"##{len(df_sala["número do processo relacionado"])}")
             # st.metric(label="nº processos",value=df_sala.groupby("data e horário").size())
             # st.markdown(f"{df_sala.groupby('data e horário')['processos'].nunique()}")
 
