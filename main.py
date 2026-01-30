@@ -329,7 +329,7 @@ if password == SENHA_SECRETARIOS:
             st.divider()
             st.markdown(f'teste')
             
-            st.markdown(f'{df["data e horário"].count()}')
+            st.markdown(f'{df[df["dia"] == dia]..count()}')
             st.markdown(f"# 📅 {dia}")
             render_day(df_dia, show_sensitive=True)
 
@@ -345,7 +345,7 @@ elif password == SENHA_AUTORIDADES:
             st.divider()
             st.markdown(f'teste')
             
-            st.markdown(f'{df["data e horário"].count()}')
+            st.markdown(f'{df[df["dia"] == dia].count()}')
             st.markdown(f"# 📅 {dia}")
             render_day(df_dia, show_sensitive=False)
 
