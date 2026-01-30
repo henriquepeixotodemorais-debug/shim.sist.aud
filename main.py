@@ -329,7 +329,7 @@ if password == SENHA_SECRETARIOS:
             st.divider()
             st.markdown(f'teste2')
             
-            st.markdown(f'{df[df["dia"] == dia]..count()}')
+            st.markdown(f'{df[df["dia"] == dia].count()}')
             st.markdown(f"# 📅 {dia}")
             render_day(df_dia, show_sensitive=True)
 
