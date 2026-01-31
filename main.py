@@ -262,7 +262,7 @@ if len(salas_selecionadas) == 0:
 # ---------------------------------------------------------
 # FILTRO DE DIA
 # ---------------------------------------------------------
-todos_dias = sorted(df["dia"].unique())
+todos_dias = sorted(df["dia"].strftime("%d/%m/%y").unique())
 
 dias_selecionados = st.multiselect(
     "Filtrar dia:",
