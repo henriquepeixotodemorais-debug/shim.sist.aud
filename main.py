@@ -337,32 +337,32 @@ def render_day(df_dia, show_sensitive):
 # ---------------------------------------------------------
 if password == SENHA_SECRETARIOS:
     st.header("📌 Painel dos Secretários")
-    das = [ds for ds in sorted(df["dia"].unique()) if ds in dias_selecionados]
-    
-    for dia in df["dia"].unique():
-        # df_dia = df[df["dia"] == dia]
+    das = df[df["dia"].isin(dias_selecionados)]
+
+    for dia in sorted(das["dia"].unique()):
         df_dia = das[das["dia"] == dia].sort_values(by="data e horário")
+
         if any(df_dia["sala de audiência"].isin(salas_selecionadas)):
-            if any(df_dia["dia"].isin(dias_selecionados)):         
-                st.divider()
-                st.markdown(f"# 📅 {dia}")
-                render_day(df_dia, show_sensitive=True)
+            st.divider()
+            st.markdown(f"# 📅 {dia}")
+            render_day(df_dia, show_sensitive=True)
+
 
 # ---------------------------------------------------------
 # AUTORIDADES
 # ---------------------------------------------------------
 elif password == SENHA_AUTORIDADES:
     st.header("⚖ Painel das Autoridades - Audiências")
-    das = [ds for ds in sorted(df["dia"].unique()) if ds in dias_selecionados]
-    
-    for dia in df["dia"].unique():
-        # df_dia = df[df["dia"] == dia]
+    das = df[df["dia"].isin(dias_selecionados)]
+
+    for dia in sorted(das["dia"].unique()):
         df_dia = das[das["dia"] == dia].sort_values(by="data e horário")
+
         if any(df_dia["sala de audiência"].isin(salas_selecionadas)):
-            if any(df_dia["dia"].isin(dias_selecionados)):         
-                st.divider()
-                st.markdown(f"# 📅 {dia}")
-                render_day(df_dia, show_sensitive=True)
+            st.divider()
+            st.markdown(f"# 📅 {dia}")
+            render_day(df_dia, show_sensitive=True)
+
 
 # ---------------------------------------------------------
 # ACESSO NEGADO
