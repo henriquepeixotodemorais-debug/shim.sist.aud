@@ -346,7 +346,7 @@ if password == SENHA_SECRETARIOS:
 
         if any(df_dia["sala de audiência"].isin(salas_selecionadas)):
             st.divider()
-            st.markdown(f"# 📅 {dia.dt.strftime("%d/%m/%y")}")
+            st.markdown(f"# 📅 {str(dia).split("-")[2]}/{str(dia).split("-")[1]}/{str(dia).split("-")[0]}")
             render_day(df_dia, show_sensitive=True)
 
 
@@ -362,7 +362,8 @@ elif password == SENHA_AUTORIDADES:
 
         if any(df_dia["sala de audiência"].isin(salas_selecionadas)):
             st.divider()
-            st.markdown(f"# 📅 {dia}")
+            # st.markdown(f"# 📅 {dia}")
+            st.markdown(f"# 📅 {str(dia).split("-")[2]}/{str(dia).split("-")[1]}/{str(dia).split("-")[0]}")
             render_day(df_dia, show_sensitive=True)
 
 
