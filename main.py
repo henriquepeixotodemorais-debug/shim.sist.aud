@@ -257,6 +257,20 @@ salas_selecionadas = st.multiselect(
 if len(salas_selecionadas) == 0:
     st.warning("Selecione ao menos uma sala.")
     st.stop()
+# ---------------------------------------------------------
+# FILTRO DE DIA
+# ---------------------------------------------------------
+todos_dias = sorted(df["dia"].unique())
+
+dias_selecionados = st.multiselect(
+    "Filtrar dia:",
+    options=todos_dias,
+    default=todos_dias,
+)
+
+if len(dias_selecionados) == 0:
+    st.warning("Selecione ao menos um dia.")
+    st.stop()
 
 # ---------------------------------------------------------
 # FUNÇÃO PARA MONTAR O BOX DE CADA PROCESSO
@@ -323,26 +337,32 @@ def render_day(df_dia, show_sensitive):
 # ---------------------------------------------------------
 if password == SENHA_SECRETARIOS:
     st.header("📌 Painel dos Secretários")
+    das = [ds for ds in sorted(df["dia"].unique()) if ds in dias_selecionados]
+    
     for dia in df["dia"].unique():
         # df_dia = df[df["dia"] == dia]
-        df_dia = df[df["dia"] == dia].sort_values(by="data e horário")
+        df_dia = das[das["dia"] == dia].sort_values(by="data e horário")
         if any(df_dia["sala de audiência"].isin(salas_selecionadas)):
-            st.divider()
-            st.markdown(f"# 📅 {dia}")
-            render_day(df_dia, show_sensitive=True)
+            if any(df_dia["dia"].isin(dias_selecionados)):         
+                st.divider()
+                st.markdown(f"# 📅 {dia}")
+                render_day(df_dia, show_sensitive=True)
 
 # ---------------------------------------------------------
 # AUTORIDADES
 # ---------------------------------------------------------
 elif password == SENHA_AUTORIDADES:
     st.header("⚖ Painel das Autoridades - Audiências")
+    das = [ds for ds in sorted(df["dia"].unique()) if ds in dias_selecionados]
+    
     for dia in df["dia"].unique():
         # df_dia = df[df["dia"] == dia]
-        df_dia = df[df["dia"] == dia].sort_values(by="data e horário")
+        df_dia = das[das["dia"] == dia].sort_values(by="data e horário")
         if any(df_dia["sala de audiência"].isin(salas_selecionadas)):
-            st.divider()
-            st.markdown(f"# 📅 {dia}")
-            render_day(df_dia, show_sensitive=False)
+            if any(df_dia["dia"].isin(dias_selecionados)):         
+                st.divider()
+                st.markdown(f"# 📅 {dia}")
+                render_day(df_dia, show_sensitive=True)
 
 # ---------------------------------------------------------
 # ACESSO NEGADO
