@@ -367,7 +367,7 @@ elif password == SENHA_AUTORIDADES:
             st.divider()
             # st.markdown(f"# 📅 {dia}")
             st.markdown(f"# 📅 {str(dia).split("-")[2]}/{str(dia).split("-")[1]}/{str(dia).split("-")[0]}")
-            render_day(df_dia, show_sensitive=True)
+            render_day(df_dia, show_sensitive=False)
 
 
 # ---------------------------------------------------------
