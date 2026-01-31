@@ -268,6 +268,8 @@ dias_selecionados = st.multiselect(
     "Filtrar dia:",
     options=todos_dias,
     default=todos_dias,
+    format_func=lambda d: d.strftime("%d/%m/%y")
+
 )
 
 if len(dias_selecionados) == 0:
