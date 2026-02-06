@@ -223,6 +223,10 @@ if password == SENHA_BASE:
 # ---------------------------------------------------------
 df = load_csv_from_github()
 
+# UA
+st.write("COLUNAS:", df.columns.tolist())
+st.write("AMOSTRA DA COLUNA:", df["data e horário"].head(20))
+
 # ---------------------------------------------------------
 # PREPARAÇÃO DOS DADOS (MANTIDA COMO SOLICITADO)
 # ---------------------------------------------------------
