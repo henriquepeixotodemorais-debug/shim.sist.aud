@@ -222,10 +222,13 @@ if password == SENHA_BASE:
 # CARREGAR CSV DO GITHUB (DESCRIPTOGRAFA NO CACHE)
 # ---------------------------------------------------------
 df = load_csv_from_github()
-
-# UA
 st.write("COLUNAS:", df.columns.tolist())
 st.write("AMOSTRA DA COLUNA:", df["data e horário"].head(20))
+
+st.write("DEBUG DF SHAPE:", df.shape)
+st.write("DEBUG COLUNAS:", df.columns.tolist())
+
+
 
 # ---------------------------------------------------------
 # PREPARAÇÃO DOS DADOS (MANTIDA COMO SOLICITADO)
@@ -356,6 +359,14 @@ def render_day(df_dia, show_sensitive):
 # SECRETÁRIOS
 # ---------------------------------------------------------
 if password == SENHA_SECRETARIOS:
+    # UA
+    st.write("COLUNAS:", df.columns.tolist())
+    st.write("AMOSTRA DA COLUNA:", df["data e horário"].head(20))
+
+    st.write("DEBUG DF SHAPE:", df.shape)
+    st.write("DEBUG COLUNAS:", df.columns.tolist())
+
+
     st.header("📌 Painel dos Secretários")
     das = df[df["dia"].isin(dias_selecionados)]
 
