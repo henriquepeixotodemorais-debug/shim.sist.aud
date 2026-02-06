@@ -5,6 +5,7 @@ import requests
 import streamlit as st
 import pandas as pd
 from cryptography.fernet import Fernet, InvalidToken
+import datetime
 
 # ---------------------------------------------------------
 # CONFIGURAÇÃO DO TEMA
@@ -240,6 +241,9 @@ if df.empty:
 df["data e horário"] = pd.to_datetime(df["data e horário"], dayfirst=True, errors="coerce") 
 # df["dia"] = df["data e horário"].dt.nomalize()
 df["dia"] = df["data e horário"].dt.date
+
+df = df[df["dia"].apply(lambda x: isinstance(x, datetime.date))] #UA
+
 # df["dia"] = df["data e horário"].dt.strftime("%d/%m/%y")
 
 df = df.sort_values(["sala de audiência", "data e horário"])
@@ -262,8 +266,13 @@ if len(salas_selecionadas) == 0:
 # ---------------------------------------------------------
 # FILTRO DE DIA
 # ---------------------------------------------------------
-# todos_dias = sorted(df["dia"].unique())
-todos_dias = sorted(df["dia"].dropna().unique())
+todos_dias = sorted(df["dia"].unique())
+# todos_dias = sorted(df["dia"].dropna().unique())
+
+# UA
+st.write("DEBUG tipos:", {type(x) for x in todos_dias})
+st.write("DEBUG valores:", todos_dias)
+
 
 # df["dia"] = df["data e horário"].dt.strftime("%d/%m/%y")
 dias_selecionados = st.multiselect(
