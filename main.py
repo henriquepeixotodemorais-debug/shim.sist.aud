@@ -5,7 +5,6 @@ import requests
 import streamlit as st
 import pandas as pd
 from cryptography.fernet import Fernet, InvalidToken
-import datetime
 
 # ---------------------------------------------------------
 # CONFIGURAÇÃO DO TEMA
@@ -87,10 +86,17 @@ EXPECTED_COLUMNS = [
 # ---------------------------------------------------------
 @st.cache_data(ttl=60)
 def load_csv_from_github():
+    """
+    Baixa o arquivo via API (conteúdo em base64), decodifica e tenta descriptografar.
+    Se 404 (arquivo não existe), retorna DataFrame vazio com colunas esperadas.
+    Se descriptografia falhar, tenta interpretar como texto plano (compatibilidade).
+    """
     headers = {"Authorization": f"token {GITHUB_TOKEN}"} if GITHUB_TOKEN else {}
 
+    # 1) Tenta obter metadados do arquivo via API
     r = requests.get(API_URL, headers=headers)
     if r.status_code == 404:
+        # arquivo ainda não existe no repo
         return pd.DataFrame(columns=EXPECTED_COLUMNS)
     if r.status_code != 200:
         st.error(f"Erro ao acessar GitHub API: {r.status_code} {r.text}")
@@ -102,46 +108,44 @@ def load_csv_from_github():
         st.error("Conteúdo vazio no GitHub.")
         st.stop()
 
+    # remover quebras de linha e decodificar base64
     content_b64 = "".join(content_b64.splitlines())
     try:
         raw_bytes = base64.b64decode(content_b64)
     except Exception as e:
-        st.error(f"Erro ao decodificar base64: {e}")
+        st.error(f"Erro ao decodificar base64 do conteúdo: {e}")
         st.stop()
 
-    # tenta descriptografar
+    # tenta descriptografar; se falhar, tenta interpretar como texto plano (fallback)
     try:
         plain_bytes = fernet.decrypt(raw_bytes)
-        text = plain_bytes.decode("utf-8", errors="replace")
+        text = plain_bytes.decode("utf-8")
     except InvalidToken:
-        # fallback: arquivo não cifrado
-        text = raw_bytes.decode("utf-8", errors="replace")
+        # fallback: assume que raw_bytes é texto UTF-8 (arquivo legado não cifrado)
+        try:
+            text = raw_bytes.decode("utf-8")
+        except Exception:
+            st.error("Arquivo no GitHub não está cifrado com a chave fornecida e não é texto UTF-8.")
+            st.stop()
 
-    # remove BOM se existir
-    if text.startswith("\ufeff"):
-        text = text.replace("\ufeff", "", 1)
-
-    # normaliza quebras de linha
-    text = text.replace("\r\n", "\n").replace("\r", "\n")
-
-    # tenta ler com vírgula
+    # Ler CSV aceitando , ou ;
     try:
-        df = pd.read_csv(io.StringIO(text), dtype=str, sep=",")
-        if df.shape[1] == 1:
-            raise ValueError("provavelmente não é vírgula")
+        df = pd.read_csv(io.StringIO(text), dtype=str, sep=None, engine="python")
     except Exception:
-        # tenta ler com ponto e vírgula
-        df = pd.read_csv(io.StringIO(text), dtype=str, sep=";")
+        try:
+            df = pd.read_csv(io.StringIO(text), dtype=str, sep=",")
+        except Exception:
+            df = pd.read_csv(io.StringIO(text), dtype=str, sep=";")
 
-    # garante colunas esperadas
+    # garantir colunas esperadas (se faltar, adiciona vazias)
     for col in EXPECTED_COLUMNS:
         if col not in df.columns:
             df[col] = ""
 
+    # manter apenas colunas esperadas na ordem correta
     df = df[EXPECTED_COLUMNS]
 
     return df.fillna("")
-
 
 # ---------------------------------------------------------
 # FUNÇÃO DE UPLOAD (CIFRA E ENVIA AO GITHUB) COM RETRY E LOG
@@ -218,18 +222,6 @@ if password == SENHA_BASE:
 # ---------------------------------------------------------
 df = load_csv_from_github()
 
-for col in df.columns:
-    st.write([col, list(col)])
-# st.write("COLUNAS:", df.columns.tolist())
-# st.write("AMOSTRA DA COLUNA:", df["data e horário"].head(20))
-
-# st.write("DEBUG DF SHAPE:", df.shape)
-# st.write("DEBUG COLUNAS:", df.columns.tolist())
-
-
-
-
-
 # ---------------------------------------------------------
 # PREPARAÇÃO DOS DADOS (MANTIDA COMO SOLICITADO)
 # ---------------------------------------------------------
@@ -248,9 +240,6 @@ if df.empty:
 df["data e horário"] = pd.to_datetime(df["data e horário"], dayfirst=True, errors="coerce") 
 # df["dia"] = df["data e horário"].dt.nomalize()
 df["dia"] = df["data e horário"].dt.date
-
-df = df[df["dia"].apply(lambda x: isinstance(x, datetime.date))] #UA
-
 # df["dia"] = df["data e horário"].dt.strftime("%d/%m/%y")
 
 df = df.sort_values(["sala de audiência", "data e horário"])
@@ -274,16 +263,6 @@ if len(salas_selecionadas) == 0:
 # FILTRO DE DIA
 # ---------------------------------------------------------
 todos_dias = sorted(df["dia"].unique())
-# todos_dias = sorted(df["dia"].dropna().unique())
-
-# UA
-
-for col in df.columns:
-    st.write([col, list(col)])
-# st.write("DEBUG tipos:", {type(x) for x in todos_dias})
-# st.write("DEBUG valores:", todos_dias)
-
-
 # df["dia"] = df["data e horário"].dt.strftime("%d/%m/%y")
 dias_selecionados = st.multiselect(
     "Filtrar dia:",
@@ -362,15 +341,6 @@ def render_day(df_dia, show_sensitive):
 # SECRETÁRIOS
 # ---------------------------------------------------------
 if password == SENHA_SECRETARIOS:
-    # UA
-    # st.write("COLUNAS:", df.columns.tolist())
-    # st.write("AMOSTRA DA COLUNA:", df["data e horário"].head(20))
-
-    # st.write("DEBUG DF SHAPE:", df.shape)
-    # st.write("DEBUG COLUNAS:", df.columns.tolist())
-    for col in df.columns:
-        st.write([col, list(col)])
-
     st.header("📌 Painel dos Secretários")
     das = df[df["dia"].isin(dias_selecionados)]
 
