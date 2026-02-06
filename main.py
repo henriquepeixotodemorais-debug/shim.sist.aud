@@ -222,11 +222,16 @@ if password == SENHA_BASE:
 # CARREGAR CSV DO GITHUB (DESCRIPTOGRAFA NO CACHE)
 # ---------------------------------------------------------
 df = load_csv_from_github()
-st.write("COLUNAS:", df.columns.tolist())
-st.write("AMOSTRA DA COLUNA:", df["data e horário"].head(20))
 
-st.write("DEBUG DF SHAPE:", df.shape)
-st.write("DEBUG COLUNAS:", df.columns.tolist())
+for col in df.columns:
+    st.write([col, list(col)])
+# st.write("COLUNAS:", df.columns.tolist())
+# st.write("AMOSTRA DA COLUNA:", df["data e horário"].head(20))
+
+# st.write("DEBUG DF SHAPE:", df.shape)
+# st.write("DEBUG COLUNAS:", df.columns.tolist())
+
+
 
 
 
@@ -277,8 +282,11 @@ todos_dias = sorted(df["dia"].unique())
 # todos_dias = sorted(df["dia"].dropna().unique())
 
 # UA
-st.write("DEBUG tipos:", {type(x) for x in todos_dias})
-st.write("DEBUG valores:", todos_dias)
+
+for col in df.columns:
+    st.write([col, list(col)])
+# st.write("DEBUG tipos:", {type(x) for x in todos_dias})
+# st.write("DEBUG valores:", todos_dias)
 
 
 # df["dia"] = df["data e horário"].dt.strftime("%d/%m/%y")
@@ -360,12 +368,13 @@ def render_day(df_dia, show_sensitive):
 # ---------------------------------------------------------
 if password == SENHA_SECRETARIOS:
     # UA
-    st.write("COLUNAS:", df.columns.tolist())
-    st.write("AMOSTRA DA COLUNA:", df["data e horário"].head(20))
+    # st.write("COLUNAS:", df.columns.tolist())
+    # st.write("AMOSTRA DA COLUNA:", df["data e horário"].head(20))
 
-    st.write("DEBUG DF SHAPE:", df.shape)
-    st.write("DEBUG COLUNAS:", df.columns.tolist())
-
+    # st.write("DEBUG DF SHAPE:", df.shape)
+    # st.write("DEBUG COLUNAS:", df.columns.tolist())
+    for col in df.columns:
+        st.write([col, list(col)])
 
     st.header("📌 Painel dos Secretários")
     das = df[df["dia"].isin(dias_selecionados)]
