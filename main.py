@@ -1,7 +1,7 @@
 import os
 import io
-import re ##
-import openpyxl##
+import re 
+import openpyxl
 import base64
 import requests
 import streamlit as st
@@ -524,7 +524,7 @@ if password == SENHA_SECRETARIOS:
 
     processos_disponiveis = sorted(idx_sd["Processos"].dropna().unique().tolist())
 
-    st.sidebar.markdown("### 📄 Processos (após Sala + Data)")
+    st.sidebar.markdown("### 📄 Processos.")
     processos_sel = st.sidebar.multiselect(
         "Selecionar processos",
         processos_disponiveis,
