@@ -338,6 +338,10 @@ def render_day(df_dia, show_sensitive):
 # SECRETÁRIOS
 # ---------------------------------------------------------
 if password == SENHA_SECRETARIOS:
+    # app.py
+    # -*- coding: utf-8 -*-
+
+
     # =========================
     # CONFIG
     # =========================
@@ -347,18 +351,19 @@ if password == SENHA_SECRETARIOS:
     RE_URL = re.compile(r"(https?://\S+)", re.IGNORECASE)
 
     # =========================
-    # FIELD (copiar nativo reduzido)
+    # FIELD
     # =========================
     def show_field(label, value):
         v = "" if value is None or (isinstance(value, float) and pd.isna(value)) else str(value)
+
         st.markdown(
-            f"<div style='font-size:12px; font-weight:600; color:#666; margin-top:2px;'>{label}</div>",
+            f"<div style='font-size:12px; font-weight:600; color:#666;'>{label}</div>",
             unsafe_allow_html=True
         )
         st.code(v)
 
     # =========================
-    # WHATSAPP (telefones únicos + 1 link por número)
+    # WHATSAPP
     # =========================
     def digits_only(s):
         return re.sub(r"\D+", "", str(s))
@@ -377,6 +382,7 @@ if password == SENHA_SECRETARIOS:
 
         for n in encontrados:
             numero = digits_only(n)
+
             if not numero:
                 continue
 
@@ -399,7 +405,7 @@ if password == SENHA_SECRETARIOS:
     def is_header(nome):
         if pd.isna(nome):
             return False
-        return not str(nome).strip().startswith("(")
+        return not str(nome).startswith("(")
 
 
     def extract_info(tl):
@@ -421,7 +427,6 @@ if password == SENHA_SECRETARIOS:
     def build_index(df):
         rows = []
 
-        # sort=False para respeitar a ordem original do arquivo
         for proc, g in df.groupby("Processos", sort=False):
             g = g.reset_index(drop=True)
 
@@ -435,10 +440,9 @@ if password == SENHA_SECRETARIOS:
                 continue
 
             header = g.loc[header_idx]
-            data, hora, link = extract_info(header.get("tl"))
 
-            sala_raw = header.get("sala")
-            sala = str(int(sala_raw)) if sala_raw is not None and not (isinstance(sala_raw, float) and pd.isna(sala_raw)) else None
+            data, hora, link = extract_info(header["tl"])
+            sala = str(int(header["sala"])) if not pd.isna(header["sala"]) else None
 
             partes = g.drop(index=header_idx)
 
@@ -469,23 +473,23 @@ if password == SENHA_SECRETARIOS:
         return q
 
     # =========================
-    # CACHE
+    # CACHE (✅ corrigido)
     # =========================
-    @st.cache_data(persist="disk")
+    @st.cache_data
     def load_df(file_bytes):
         return pd.read_excel(io.BytesIO(file_bytes), engine="openpyxl")
 
 
-    @st.cache_data(persist="disk")
+    @st.cache_data
     def load_idx(df):
         return build_index(df)
 
     # =========================
     # APP
     # =========================
-    file = st.file_uploader("Envie o Excel")
+    st.title("📌 Painel de Salas")
 
-    st.title("📌 Painel dos Secretários")
+    file = st.file_uploader("Envie o Excel")
 
     if not file:
         st.stop()
@@ -494,7 +498,7 @@ if password == SENHA_SECRETARIOS:
     idx = load_idx(df)
 
     # =========================
-    # FILTROS (sidebar com separação clara)
+    # FILTROS
     # =========================
     st.sidebar.markdown("## 🎛️ Filtros")
     st.sidebar.divider()
@@ -502,11 +506,13 @@ if password == SENHA_SECRETARIOS:
     salas_all = sorted(idx["sala"].dropna().unique().tolist())
     datas_all = sorted(idx["data"].dropna().unique().tolist())
 
+    # SALAS
     st.sidebar.markdown("### 🏛️ Salas")
     salas_sel = st.sidebar.multiselect("Selecionar salas", salas_all, salas_all)
 
     st.sidebar.divider()
 
+    # DATAS
     st.sidebar.markdown("### 📅 Datas")
     datas_sel = []
     for d in datas_all:
@@ -515,21 +521,19 @@ if password == SENHA_SECRETARIOS:
 
     st.sidebar.divider()
 
-    # ✅ Processos só depois de aplicar Sala + Data
+    # PROCESSOS (filtrado pelos dois anteriores)
     idx_sd = idx.copy()
+
     if salas_sel:
         idx_sd = idx_sd[idx_sd["sala"].isin(salas_sel)]
+
     if datas_sel:
         idx_sd = idx_sd[idx_sd["data"].isin(datas_sel)]
 
-    processos_disponiveis = sorted(idx_sd["Processos"].dropna().unique().tolist())
+    processos_disp = sorted(idx_sd["Processos"].dropna().unique().tolist())
 
-    st.sidebar.markdown("### 📄 Processos.")
-    processos_sel = st.sidebar.multiselect(
-        "Selecionar processos",
-        processos_disponiveis,
-        processos_disponiveis
-    )
+    st.sidebar.markdown("### 📄 Processos")
+    processos_sel = st.sidebar.multiselect("Selecionar processos", processos_disp, processos_disp)
 
     view = filter_index(idx, salas_sel, datas_sel, processos_sel)
 
@@ -540,113 +544,87 @@ if password == SENHA_SECRETARIOS:
     # =========================
     # RENDER
     # =========================
-    cols = st.columns(len(salas_sel)) if salas_sel else [st.container()]
+    cols = st.columns(len(salas_sel))
 
     for col, sala in zip(cols, salas_sel):
         with col:
-            # ✅ Sala com mais destaque
             st.markdown(
-                f"<div style='font-size:30px; font-weight:900; margin:2px 0 6px 0;'>Sala {sala}</div>",
+                f"<div style='font-size:30px; font-weight:900;'>Sala {sala}</div>",
                 unsafe_allow_html=True
             )
 
-            base = view[view["sala"] == sala].copy()
+            base = view[view["sala"] == sala]
 
             for data in sorted(base["data"].dropna().unique()):
-                # ✅ Data com destaque
                 st.markdown(
-                    f"<div style='font-size:22px; font-weight:800; margin:10px 0 6px 0;'>📅 {data}</div>",
+                    f"<div style='font-size:22px; font-weight:800;'>📅 {data}</div>",
                     unsafe_allow_html=True
                 )
 
                 dia = base[base["data"] == data].copy()
 
-                # ✅ Ordena por horário (e mantém o resto estável)
                 dia["ordem"] = dia["hora"].fillna("99:99")
-                dia = dia.sort_values("ordem").drop(columns=["ordem"])
+                dia = dia.sort_values("ordem")
 
                 for _, row in dia.iterrows():
-                    # ✅ Box do processo
                     with st.container(border=True):
-                        hora = row.get("hora") or ""
-                        proc = row.get("Processos") or ""
-                        link = row.get("link") or ""
 
-                        # ✅ Hora com destaque
                         st.markdown(
-                            f"<div style='font-size:20px; font-weight:900; margin:2px 0 8px 0;'>Hora: {hora}</div>",
+                            f"<div style='font-size:20px; font-weight:900;'>Hora: {row['hora']}</div>",
                             unsafe_allow_html=True
                         )
 
-                        # ✅ Processo com destaque
                         st.markdown(
-                            f"<div style='font-size:18px; font-weight:900; margin:2px 0 10px 0;'>Processo: {proc}</div>",
+                            f"<div style='font-size:18px; font-weight:900;'>Processo: {row['Processos']}</div>",
                             unsafe_allow_html=True
                         )
 
-                        # ✅ Abrir sala bem destacado
-                        if link:
-                            st.markdown(
-                                f"<div style='font-size:16px; font-weight:800; margin:0 0 8px 0;'>"
-                                f"<a href='{link}' target='_blank'>🔗 Abrir sala</a>"
-                                f"</div>",
-                                unsafe_allow_html=True
-                            )
+                        if row["link"]:
+                            st.markdown(f"{row['link']}")
 
-                        # ✅ “Copiar todos os nomes” (estável): campo com todos os nomes
-                        partes_df = row.get("partes")
-                        if partes_df is not None and len(partes_df) > 0:
-                            nomes = []
-                            for n in partes_df.get("Nome", pd.Series(dtype=str)).tolist():
-                                if n is None or (isinstance(n, float) and pd.isna(n)):
-                                    continue
-                                s = str(n).strip()
-                                if s:
-                                    nomes.append(s)
+                        # ✅ COPY NOMES
+                        partes_df = row["partes"]
 
-                            if nomes:
-                                st.markdown(
-                                    "<div style='font-size:12px; font-weight:700; color:#444; margin-top:6px;'>"
-                                    "Copiar todos os nomes.</div>",
-                                    unsafe_allow_html=True
-                                )
-                                st.code("\n".join(nomes))
+                        nomes = [
+                            str(n).strip()
+                            for n in partes_df["Nome"].tolist()
+                            if pd.notna(n)
+                        ]
 
-                        # Partes (menor destaque)
-                        if partes_df is None or len(partes_df) == 0:
-                            st.caption("—")
-                            continue
+                        if nomes:
+                            st.markdown("**Copiar todos os nomes:**")
+                            st.code("\n".join(nomes))
 
-                        for _, part in partes_df.reset_index(drop=True).iterrows():
+                        # =========================
+                        # PARTES
+                        # =========================
+                        for _, part in partes_df.reset_index().iterrows():
                             st.divider()
 
-                            show_field("Nome", part.get("Nome"))
-                            show_field("Dados da parte", part.get("Dados da parte"))
-                            show_field("Endereço", part.get("Endereço"))
+                            show_field("Nome", part["Nome"])
+                            show_field("Dados da parte", part["Dados da parte"])
+                            show_field("Endereço", part["Endereço"])
 
-                            st.markdown(
-                                "<div style='font-size:12px; font-weight:600; color:#666; margin-top:2px;'>Contatos</div>",
-                                unsafe_allow_html=True
-                            )
+                            st.markdown("**Contatos**")
 
-                            links = whatsapp_links(part.get("Contatos"))
+                            links = whatsapp_links(part["Contatos"])
 
                             if links:
                                 for txt, url in links:
                                     st.markdown(f"- {txt} → {url}")
                             else:
-                                st.caption("—")
+                                st.caption("-")
 
-                            show_field("Copiar contatos", part.get("Contatos"))
+                            show_field("Copiar contatos", part["Contatos"])
 
-                            if not pd.isna(part.get("lc")):
-                                show_field("Local", part.get("lc"))
+                            if not pd.isna(part["lc"]):
+                                show_field("Local", part["lc"])
 
-                            if not pd.isna(part.get("et")):
-                                show_field("Entrevistador", part.get("et"))
+                            if not pd.isna(part["et"]):
+                                show_field("Entrevistador", part["et"])
 
-                            if not pd.isna(part.get("tl da intimação")):
-                                show_field("Telefone da intimação", part.get("tl da intimação"))
+                            if not pd.isna(part["tl da intimação"]):
+                                show_field("Telefone da intimação", part["tl da intimação"])
 
                                 
 
