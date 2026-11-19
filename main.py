@@ -17,10 +17,12 @@ import os
 import re
 import secrets
 import shutil
+import stat
 import tempfile
+import zipfile
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from threading import Thread
 from typing import Any
 from zipfile import BadZipFile
@@ -1213,17 +1215,68 @@ def render_process_summary(
     render_pending_lines()
 
 
-def choose_pack_directory() -> str:
-    import tkinter as tk
-    from tkinter import filedialog
-
-    root = tk.Tk()
-    root.withdraw()
-    root.attributes("-topmost", True)
+def extract_pack_archive(archive_bytes: bytes) -> tuple[Path, Path]:
+    extraction_root = Path(tempfile.mkdtemp(prefix="sala_controle_"))
+    resolved_root = extraction_root.resolve()
+    extraction_complete = False
     try:
-        return filedialog.askdirectory(title="Selecione a pasta do pack")
+        with zipfile.ZipFile(io.BytesIO(archive_bytes)) as archive:
+            members = archive.infolist()
+            if len(members) > 10000:
+                raise ValueError("O ZIP contém arquivos demais.")
+
+            total_size = 0
+            for member in members:
+                if not member.filename:
+                    continue
+                if "\\" in member.filename:
+                    raise ValueError("O ZIP contém um caminho de arquivo inválido.")
+
+                relative_path = PurePosixPath(member.filename)
+                if (
+                    relative_path.is_absolute()
+                    or ".." in relative_path.parts
+                    or (
+                        relative_path.parts
+                        and relative_path.parts[0].endswith(":")
+                    )
+                ):
+                    raise ValueError("O ZIP contém um caminho de arquivo inválido.")
+                if not relative_path.parts:
+                    continue
+
+                file_type = stat.S_IFMT(member.external_attr >> 16)
+                if file_type == stat.S_IFLNK:
+                    raise ValueError("O ZIP não pode conter links simbólicos.")
+                if file_type not in (0, stat.S_IFREG, stat.S_IFDIR):
+                    raise ValueError("O ZIP contém um tipo de arquivo não permitido.")
+
+                destination = extraction_root.joinpath(*relative_path.parts).resolve()
+                if not destination.is_relative_to(resolved_root):
+                    raise ValueError("O ZIP contém um caminho fora da pasta do pack.")
+                if member.is_dir():
+                    destination.mkdir(parents=True, exist_ok=True)
+                    continue
+
+                total_size += member.file_size
+                if total_size > 2 * 1024**3:
+                    raise ValueError("O tamanho descompactado do ZIP excede 2 GB.")
+
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                with archive.open(member) as source, destination.open("wb") as target:
+                    shutil.copyfileobj(source, target)
+
+        spreadsheets = list(extraction_root.rglob("raspagem.geral.xlsx"))
+        if len(spreadsheets) != 1:
+            raise ValueError(
+                "O ZIP deve conter exatamente um arquivo raspagem.geral.xlsx."
+            )
+
+        extraction_complete = True
+        return spreadsheets[0].parent, extraction_root
     finally:
-        root.destroy()
+        if not extraction_complete:
+            shutil.rmtree(extraction_root)
 
 
 def render_pack(root: Path) -> None:
@@ -1448,13 +1501,42 @@ if password == SENHA_SECRETARIOS:
 
     with st.sidebar:
         st.header("Abrir um pack")
-        if st.button("Selecionar pasta…", width="stretch"):
-            selected_directory = choose_pack_directory()
-            if selected_directory:
-                st.session_state["pack_directory_input"] = selected_directory
+        st.caption(
+            "No Streamlit Cloud, envie um ZIP contendo o pack. "
+            "O ZIP deve incluir raspagem.geral.xlsx."
+        )
+        uploaded_pack = st.file_uploader(
+            "Enviar ZIP do pack",
+            type=["zip"],
+            key="pack_zip_upload",
+        )
+        if "pack_directory_input" not in st.session_state:
+            st.session_state["pack_directory_input"] = str(DEFAULT_PACK)
+        if uploaded_pack is not None:
+            archive_bytes = uploaded_pack.getvalue()
+            archive_hash = hashlib.sha256(archive_bytes).hexdigest()
+            if st.session_state.get("pack_zip_hash") != archive_hash:
+                try:
+                    uploaded_pack_root, extraction_root = extract_pack_archive(
+                        archive_bytes
+                    )
+                except (
+                    OSError,
+                    BadZipFile,
+                    EOFError,
+                    NotImplementedError,
+                    RuntimeError,
+                    ValueError,
+                ) as error:
+                    st.error(f"Não foi possível carregar o ZIP do pack: {error}")
+                else:
+                    st.session_state["pack_zip_hash"] = archive_hash
+                    st.session_state["pack_temp_root"] = str(extraction_root)
+                    st.session_state["pack_directory_input"] = str(uploaded_pack_root)
+                    st.session_state["pack_root"] = str(uploaded_pack_root)
+                    st.success("Pack enviado e carregado.")
         st.text_input(
             "Diretório do pack",
-            value=str(DEFAULT_PACK),
             key="pack_directory_input",
             help="A pasta precisa conter raspagem.geral.xlsx.",
         )
