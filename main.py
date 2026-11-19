@@ -1039,6 +1039,31 @@ def render_spreadsheet_editor(
                 f"Não foi possível copiar {path.name}: "
                 f"{clipboard_result.copy_error}"
             )
+        save_feedback_key = f"saved_{editor_key}"
+        save_message = st.session_state.get(save_feedback_key)
+        if save_message:
+            st.success(save_message)
+            try:
+                saved_content = path.read_bytes()
+            except OSError as error:
+                st.error(f"Não foi possível preparar o download de {path.name}: {error}")
+            else:
+                mime_type = {
+                    ".csv": "text/csv",
+                    ".xlsx": (
+                        "application/vnd.openxmlformats-officedocument."
+                        "spreadsheetml.sheet"
+                    ),
+                    ".xlsm": "application/vnd.ms-excel.sheet.macroEnabled.12",
+                }.get(path.suffix.casefold(), "application/octet-stream")
+                st.download_button(
+                    "Baixar planilha atualizada",
+                    data=saved_content,
+                    file_name=path.name,
+                    mime=mime_type,
+                    key=f"download_{editor_key}",
+                    width="stretch",
+                )
         if st.button(
             "Salvar alterações nesta planilha",
             key=f"save_{editor_key}",
@@ -1063,12 +1088,14 @@ def render_spreadsheet_editor(
             else:
                 st.session_state.pop(editor_key, None)
                 if changed or added:
-                    st.success(
+                    st.session_state[save_feedback_key] = (
                         f"{changed} célula(s) atualizada(s) e "
                         f"{added} linha(s) adicionada(s) em {path.name}."
                     )
                 else:
-                    st.success("Nenhuma alteração para salvar.")
+                    st.session_state[save_feedback_key] = (
+                        "Nenhuma alteração para salvar."
+                    )
                 st.rerun()
 
 
@@ -1484,7 +1511,7 @@ def render_pack(root: Path) -> None:
         )
     st.caption(
         "As colunas Processo/Processos e Linha são protegidas. "
-        "As demais alterações são gravadas no arquivo original ao salvar."
+        "Após salvar, baixe a planilha atualizada para manter uma cópia local."
     )
     for table in tables:
         render_spreadsheet_editor(
