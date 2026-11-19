@@ -1220,67 +1220,67 @@ def render_process_summary(
     render_pending_lines()
 
 
-def choose_pack_directory() -> str:
-    import tkinter as tk
-    from tkinter import filedialog
+    def choose_pack_directory() -> str:
+        import tkinter as tk
+        from tkinter import filedialog
 
-    root = tk.Tk()
-    root.withdraw()
-    root.attributes("-topmost", True)
-    try:
-        return filedialog.askdirectory(title="Selecione a pasta do pack")
-    finally:
-        root.destroy()
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes("-topmost", True)
+        try:
+            return filedialog.askdirectory(title="Selecione a pasta do pack")
+        finally:
+            root.destroy()
 
 
-def render_pack(root: Path) -> None:
-    spreadsheet = root / "raspagem.geral.xlsx"
-    if not spreadsheet.is_file():
-        st.error(f"Não encontrei raspagem.geral.xlsx em {root}.")
-        return
-    try:
-        processes = load_processes(spreadsheet)
-    except (OSError, InvalidFileException, BadZipFile, ValueError) as error:
-        st.error(f"Não foi possível carregar a ordem dos processos: {error}")
-        return
-    if not processes:
-        st.warning("A coluna Processo não contém processos para exibir.")
-        return
+    def render_pack(root: Path) -> None:
+        spreadsheet = root / "raspagem.geral.xlsx"
+        if not spreadsheet.is_file():
+            st.error(f"Não encontrei raspagem.geral.xlsx em {root}.")
+            return
+        try:
+            processes = load_processes(spreadsheet)
+        except (OSError, InvalidFileException, BadZipFile, ValueError) as error:
+            st.error(f"Não foi possível carregar a ordem dos processos: {error}")
+            return
+        if not processes:
+            st.warning("A coluna Processo não contém processos para exibir.")
+            return
 
-    current_root = str(root.resolve())
-    if st.session_state.get("loaded_root") != current_root:
-        st.session_state["loaded_root"] = current_root
-        st.session_state["process_index"] = 0
-        st.session_state["process_selector"] = processes[0]
-    elif st.session_state.get("process_selector") not in processes:
-        st.session_state["process_index"] = 0
-        st.session_state["process_selector"] = processes[0]
+        current_root = str(root.resolve())
+        if st.session_state.get("loaded_root") != current_root:
+            st.session_state["loaded_root"] = current_root
+            st.session_state["process_index"] = 0
+            st.session_state["process_selector"] = processes[0]
+        elif st.session_state.get("process_selector") not in processes:
+            st.session_state["process_index"] = 0
+            st.session_state["process_selector"] = processes[0]
 
-    index = processes.index(st.session_state["process_selector"])
-    left, selector, right = st.columns([1, 8, 1])
-    with left:
-        st.button(
-            "← Anterior",
-            disabled=index == 0,
-            width="stretch",
-            on_click=set_process_selection,
-            args=(processes, index - 1 if index > 0 else index),
-        )
-    with selector:
-        selected = st.selectbox(
-            "Ordem de apresentação · raspagem.geral.xlsx",
-            processes,
-            key="process_selector",
-            format_func=lambda value: f"{processes.index(value) + 1:03d} / {len(processes):03d}  ·  {value}",
-        )
-    with right:
-        st.button(
-            "Próximo →",
-            disabled=index >= len(processes) - 1,
-            width="stretch",
-            on_click=set_process_selection,
-            args=(processes, index + 1 if index < len(processes) - 1 else index),
-        )
+        index = processes.index(st.session_state["process_selector"])
+        left, selector, right = st.columns([1, 8, 1])
+        with left:
+            st.button(
+                "← Anterior",
+                disabled=index == 0,
+                width="stretch",
+                on_click=set_process_selection,
+                args=(processes, index - 1 if index > 0 else index),
+            )
+        with selector:
+            selected = st.selectbox(
+                "Ordem de apresentação · raspagem.geral.xlsx",
+                processes,
+                key="process_selector",
+                format_func=lambda value: f"{processes.index(value) + 1:03d} / {len(processes):03d}  ·  {value}",
+            )
+        with right:
+            st.button(
+                "Próximo →",
+                disabled=index >= len(processes) - 1,
+                width="stretch",
+                on_click=set_process_selection,
+                args=(processes, index + 1 if index < len(processes) - 1 else index),
+            )
 
     process_index = processes.index(selected)
     st.session_state["process_index"] = process_index
